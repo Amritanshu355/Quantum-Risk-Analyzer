@@ -55,7 +55,7 @@ A comprehensive Streamlit-based application for analyzing quantum computing thre
 
 ## Running the Application
 ```bash
-streamlit run app.py --server.port 5000
+streamlit run app.py --server.port=8502 --server.address=localhost
 ```
 
 ## Configuration Options
