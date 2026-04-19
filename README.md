@@ -10,7 +10,7 @@
 
 **Quantum Risk Analyzer** is an enterprise-grade platform for assessing quantum computing threats to banking cryptographic infrastructure. Built for security teams, compliance officers, and C-suite executives to understand, prioritize, and plan cryptographic migrations.
 ## 📊 Dashboard Preview
-![Dashboard](image-1.png)
+![Dashboard](image-2.png)
 
 ## ⚙️ Workflow
 ![Workflow](workflow1.jpeg)
