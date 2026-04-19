@@ -1,87 +1,249 @@
-# Quantum Computing Risk Analyst for Banks
+# 🔐 Quantum Risk Analyzer v2.0
 
-## Overview
-A comprehensive Streamlit-based application for analyzing quantum computing threats to banking cryptographic infrastructure. The platform provides risk assessment, compliance checking, cost estimation, and migration planning capabilities.
+## Enterprise Cryptographic Assessment Platform
 
-## Project Structure
-```
-/
-├── app.py                       # Main Streamlit dashboard application
-├── modules/
-│   ├── __init__.py             # Module initialization
-│   ├── risk_analyzer.py        # Core risk analysis engine
-│   ├── compliance_checker.py   # Regulatory compliance assessment
-│   ├── cost_estimator.py       # Migration cost estimation
-│   └── visualizations.py       # Plotly chart components
-├── .streamlit/
-│   └── config.toml             # Streamlit configuration
-└── pyproject.toml              # Python dependencies
-```
+[![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://python.org)
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.53+-FF4B4B.svg)](https://streamlit.io)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-## Key Features
+---
 
-### 1. Risk Analysis Module (`modules/risk_analyzer.py`)
-- **Quantum Vulnerability Analysis**: Assesses cryptographic algorithms against quantum computing threats
-- **Threat Timeline Estimation**: Calculates years until quantum threat materialization
-- **Threat Classification**: Categorizes risks as CRITICAL, HIGH, MEDIUM, LOW, MINIMAL
-- **Migration Priority Scoring**: Ranks assets by urgency of migration need
+**Quantum Risk Analyzer** is an enterprise-grade platform for assessing quantum computing threats to banking cryptographic infrastructure. Built for security teams, compliance officers, and C-suite executives to understand, prioritize, and plan cryptographic migrations.
 
-### 2. Compliance Checker (`modules/compliance_checker.py`)
-- Evaluates compliance against major regulations: NIST, PCI-DSS, GDPR, SOX, Basel III, FFIEC, ISO 27001, SWIFT CSP
-- Generates gap analysis and remediation steps
-- Calculates overall compliance score
+![Dashboard Preview](docs/dashboard-preview.png)
 
-### 3. Cost Estimator (`modules/cost_estimator.py`)
-- Phase-based migration cost calculation
-- ROI analysis over 10-year horizon
-- Scenario comparison (Aggressive, Standard, Conservative)
-- Timeline and Gantt chart generation
+---
 
-### 4. Visualizations (`modules/visualizations.py`)
-- Risk heatmaps
-- Threat timeline charts
-- Migration priority rankings
-- Cost breakdown pie charts
-- ROI analysis charts
-- Compliance gauge meters
-- Algorithm vulnerability radar charts
+## ✨ Features
 
-## Technologies Used
-- **Python 3.11**
-- **Streamlit**: Web dashboard framework
-- **Pandas**: Data manipulation
-- **NumPy**: Numerical computations
-- **Plotly**: Interactive visualizations
+### 🔍 Core Capabilities
 
-## Running the Application
+| Feature | Description |
+|---------|-------------|
+| **Risk Analysis** | Comprehensive vulnerability assessment of cryptographic assets against quantum threats |
+| **AI Recommendations** | Machine-generated prioritized action items with effort estimates |
+| **Compliance Checker** | Automated assessment against FFIEC, PCI-DSS, GDPR, SOX, NIST, and more |
+| **Cost Estimation** | Phase-based migration cost calculation with ROI analysis |
+| **3D Visualizations** | Interactive risk surface analysis and threat timeline projections |
+| **Executive Reports** | One-click report generation for different stakeholder audiences |
+
+### 🎯 New in v2.0
+
+- **AI-Powered Recommendations Engine** - Context-aware migration recommendations
+- **3D Risk Surface Visualization** - Interactive 3D analysis of vulnerability vs timeline
+- **Crypto-Agility Scoring** - Radar chart assessment of organizational readiness
+- **Modern UI/UX** - Professional gradient design with animations
+- **15-Year Threat Forecast** - Projection of when assets will be at risk
+- **Migration Roadmap** - Phase-based visualization of migration priorities
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Python 3.11 or higher
+- pip or uv package manager
+
+### Installation
+
 ```bash
-streamlit run app.py --server.port 5000
+# Clone the repository
+git clone https://github.com/yourusername/quantum-risk-analyzer.git
+cd quantum-risk-analyzer
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the application
+streamlit run app.py
 ```
 
-## Configuration Options
-The sidebar provides configuration for:
-- Bank Name and Size (Small, Medium, Large, Enterprise)
-- Quantum Advancement Factor (0.5x - 2.0x)
-- Current Quantum Readiness Level
-- Risk Tolerance
+### Using uv (Recommended)
 
-## Sample Data
-The application includes a sample bank cryptographic inventory with 10 assets covering:
-- Core Banking TLS (RSA-2048)
-- Payment Gateway (RSA-4096)
-- Customer Authentication (ECC-256)
-- Mobile Banking (ECC-384)
-- Data Storage (AES-256)
-- And more...
+```bash
+# Install uv if you haven't already
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
-## Report Generation
-- Executive Summary Report (Markdown)
-- Technical Assessment Report (CSV)
-- Compliance Gap Report (CSV)
+# Install and run
+uv pip install -r requirements.txt
+streamlit run app.py
+```
 
-## Recent Changes
-- **January 2026**: Initial release with full feature set
-  - Core risk analysis engine
-  - Compliance assessment module
-  - Cost estimation and ROI analysis
-  - Interactive dashboard with visualizations
+---
+
+## 📊 Usage Guide
+
+### 1. Configure Your Bank Profile
+
+Use the sidebar to set:
+- **Bank Name & Size** - Affects cost estimates and compliance requirements
+- **Quantum Advancement Factor** - Simulate faster/slower quantum progress (0.5x - 2.0x)
+- **Current Quantum Readiness** - Your organization's preparedness level
+- **Risk Tolerance** - Impacts migration priority calculations
+
+### 2. Add Cryptographic Assets
+
+Either:
+- ✅ Use the **Sample Bank Inventory** for demonstration
+- ➕ Manually add assets via the **Asset Management** tab
+
+### 3. Review the Dashboard
+
+The home dashboard shows:
+- Critical and high-risk asset counts
+- Average vulnerability score
+- Total migration cost estimate
+- Time window until quantum threat
+
+### 4. Explore Analysis Tabs
+
+| Tab | Purpose |
+|-----|---------|
+| 📊 Risk Analysis | Heatmaps, timelines, and priority matrices |
+| 📜 Compliance | Regulatory gap analysis and remediation actions |
+| 💰 Cost Estimation | Budget planning and ROI projections |
+| 🤖 AI Recommendations | Prioritized action items |
+| 🏦 Asset Management | Add/remove cryptographic assets |
+| 📋 Reports | Download executive and technical reports |
+
+---
+
+## 🏗️ Architecture
+
+```
+quantum-risk-analyzer/
+├── app.py                      # Main Streamlit application
+├── modules/
+│   ├── __init__.py            # Module exports
+│   ├── risk_analyzer.py       # Core risk analysis engine
+│   ├── compliance_checker.py  # Regulatory compliance assessment
+│   ├── cost_estimator.py      # Migration cost calculations
+│   ├── visualizations.py      # Plotly chart components
+│   ├── ai_recommendations.py  # AI recommendation engine (NEW)
+│   └── dashboard_components.py # Modern UI components (NEW)
+├── .streamlit/
+│   ├── config.toml            # Streamlit configuration
+│   └── secrets.template.toml  # Secrets template
+├── requirements.txt           # Python dependencies
+├── pyproject.toml            # Project metadata
+└── README.md                 # This file
+```
+
+---
+
+## 🧪 Sample Data
+
+The application includes a realistic sample bank inventory with 10 cryptographic assets:
+
+| Asset | Algorithm | Usage Area | Sensitivity |
+|-------|-----------|------------|-------------|
+| Core Banking TLS | RSA-2048 | Core Banking | Critical |
+| Payment Gateway | RSA-4096 | Payment Processing | Critical |
+| Customer Auth Keys | ECC-256 | Customer Authentication | High |
+| Mobile App Signing | ECC-384 | Mobile Banking | High |
+| Data-at-Rest | AES-256 | Data Storage | Critical |
+| API Gateway | RSA-2048 | API Security | Medium |
+| ATM Communication | 3DES | ATM Network | High |
+| Internal Email | RSA-2048 | Internal Communications | Low |
+| Database Encryption | AES-128 | Data Storage | High |
+| Digital Signatures | SHA-256 | Core Banking | Critical |
+
+---
+
+## 📈 Compliance Frameworks
+
+The compliance checker evaluates against:
+
+- **FFIEC** - Federal Financial Institutions Examination Council
+- **PCI-DSS** - Payment Card Industry Data Security Standard
+- **GDPR** - General Data Protection Regulation
+- **SOX** - Sarbanes-Oxley Act
+- **NIST SP 800-208** - Post-Quantum Cryptography Standards
+- **SWIFT CSP** - SWIFT Customer Security Programme
+- **ISO 27001** - Information Security Management
+- **Basel III** - Banking Regulatory Framework
+
+---
+
+## 🎨 Customization
+
+### Theme Colors
+
+Edit `.streamlit/config.toml` to customize:
+
+```toml
+[theme]
+primaryColor = "#667eea"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f0f2f6"
+textColor = "#262730"
+font = "sans serif"
+```
+
+### Custom CSS
+
+Add your own styles in `app.py` by modifying the `CUSTOM_CSS` string.
+
+---
+
+## ☁️ Deploy to Streamlit Cloud
+
+### Step 1: Push to GitHub
+
+```bash
+git init
+git add .
+git commit -m "Initial commit"
+git remote add origin https://github.com/yourusername/quantum-risk-analyzer.git
+git push -u origin main
+```
+
+### Step 2: Connect to Streamlit Cloud
+
+1. Go to [share.streamlit.io](https://share.streamlit.io)
+2. Click **"New App"**
+3. Select your repository
+4. Set the main file path to `app.py`
+5. Click **"Deploy!"**
+
+### Step 3: Configure (Optional)
+
+For private repos or custom settings, add a `.streamlit/secrets.toml` file.
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🙏 Acknowledgments
+
+- **NIST** for Post-Quantum Cryptography standards
+- **Streamlit** for the amazing web framework
+- **Plotly** for interactive visualizations
+
+---
+
+## 📬 Contact
+
+- **Project Link**: [GitHub Repository](https://github.com/yourusername/quantum-risk-analyzer)
+- **Issues**: [Report a Bug](https://github.com/yourusername/quantum-risk-analyzer/issues)
+
+---
+
+*Built with ❤️ for the quantum-safe future*

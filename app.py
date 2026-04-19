@@ -1,647 +1,806 @@
+"""
+Quantum Computing Risk Analyzer for Banks
+Modern, Resume-Worthy Edition
+"""
+
 import streamlit as st
 import pandas as pd
 import numpy as np
 from datetime import datetime
+import plotly.express as px
+import plotly.graph_objects as go
+# from plotly.subplots import make_subplots  # Not used in current code
 
+# Import modules
 from modules.risk_analyzer import (
     QuantumVulnerabilityAnalyzer, BankCryptoInventory, CryptoAsset,
-    CryptoAlgorithm, generate_risk_report, ThreatLevel
+    CryptoAlgorithm, generate_risk_report
 )
-from modules.compliance_checker import QuantumComplianceChecker, RegulatoryBody
-from modules.cost_estimator import QuantumMigrationCostEstimator, MigrationPhase
-from modules.visualizations import (
-    create_risk_heatmap, create_threat_timeline_chart, create_migration_priority_chart,
-    create_cost_breakdown_chart, create_timeline_gantt_chart, create_roi_chart,
-    create_compliance_gauge, create_algorithm_vulnerability_radar,
-    create_threat_distribution_pie, create_cost_vs_risk_scatter
-)
+from modules.compliance_checker import QuantumComplianceChecker
+from modules.cost_estimator import QuantumMigrationCostEstimator
+from modules.ai_recommendations import AIRecommendationEngine, RecommendationPriority
+from modules.file_parser import FileParser
 
+# Page configuration
 st.set_page_config(
-    page_title="Quantum Computing Risk Analyst",
+    page_title="Quantum Risk Analyzer",
     page_icon="🔐",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-st.markdown("""
+# Custom CSS - Clean White Theme for Perfect Readability
+CUSTOM_CSS = """
 <style>
-    .main-header {
-        font-size: 2.5rem;
-        font-weight: bold;
-        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        text-align: center;
-        margin-bottom: 1rem;
-    }
-    .metric-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 1rem;
-        border-radius: 10px;
-        color: white;
-        text-align: center;
-    }
-    .risk-critical { color: #E74C3C; font-weight: bold; }
-    .risk-high { color: #E67E22; font-weight: bold; }
-    .risk-medium { color: #F1C40F; font-weight: bold; }
-    .risk-low { color: #2ECC71; font-weight: bold; }
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 24px;
-    }
-    .stTabs [data-baseweb="tab"] {
-        height: 50px;
-        padding-top: 10px;
-        padding-bottom: 10px;
-    }
+/* Global white theme - clean and professional */
+html, body, [data-testid="stAppViewContainer"] {
+    background-color: #ffffff !important;
+    color: #1f2328 !important;
+}
+
+[data-testid="stSidebar"] {
+    background-color: #f6f8fa !important;
+}
+
+/* Main container */
+.main > div {
+    padding: 1rem 2rem;
+}
+
+/* Header */
+.main-header {
+    background: linear-gradient(135deg, #0969da 0%, #8250df 50%, #cf222e 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-size: 2.5rem;
+    font-weight: 800;
+    text-align: center;
+    margin-bottom: 0.5rem;
+}
+
+.sub-header {
+    text-align: center;
+    color: #57606a;
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Metric cards */
+.metric-card {
+    padding: 1.5rem;
+    border-radius: 12px;
+    text-align: center;
+    background: linear-gradient(135deg, #ffffff 0%, #f6f8fa 100%);
+    border: 1px solid #d0d7de;
+    box-shadow: 0 4px 20px rgba(9, 105, 218, 0.1);
+}
+
+/* Info boxes */
+.info-box {
+    background: #f6f8fa;
+    border-left: 4px solid #0969da;
+    padding: 1rem;
+    border-radius: 8px;
+    margin: 1rem 0;
+    border: 1px solid #d0d7de;
+}
+
+/* Dataframes */
+[data-testid="stDataFrame"] {
+    background-color: #ffffff !important;
+}
+
+/* Buttons */
+.stButton > button {
+    background: linear-gradient(135deg, #0969da 0%, #1f6feb 100%);
+    color: white;
+    border: 1px solid #0969da;
+    padding: 0.6rem 1.5rem;
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+.stButton > button:hover {
+    background: linear-gradient(135deg, #1f6feb 0%, #0969da 100%);
+    box-shadow: 0 4px 15px rgba(9, 105, 218, 0.3);
+}
+
+/* Footer */
+.footer {
+    text-align: center;
+    padding: 2rem;
+    color: #656d76;
+    font-size: 0.8rem;
+    border-top: 1px solid #d0d7de;
+    margin-top: 2rem;
+}
+
+/* Hide Streamlit elements */
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+
+/* Input fields */
+input, textarea, select {
+    background-color: #f6f8fa !important;
+    color: #1f2328 !important;
+    border-color: #d0d7de !important;
+}
+
+/* Tabs */
+[data-baseweb="tab"] {
+    background-color: #f6f8fa !important;
+}
+
+[data-baseweb="tab"][aria-selected="true"] {
+    background: linear-gradient(135deg, #0969da 0%, #1f6feb 100%) !important;
+}
 </style>
-""", unsafe_allow_html=True)
+"""
+
+st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
 
 def init_session_state():
-    if 'risk_data' not in st.session_state:
-        st.session_state.risk_data = None
-    if 'custom_assets' not in st.session_state:
-        st.session_state.custom_assets = []
-    if 'analysis_run' not in st.session_state:
-        st.session_state.analysis_run = False
+    """Initialize session state"""
+    defaults = {
+        'risk_data': None,
+        'custom_assets': [],
+        'recommendations': None,
+        'config': {},
+        'uploaded_assets': None,
+        'uploaded_file_name': None,
+        'use_uploaded_data': False
+    }
+    for key, value in defaults.items():
+        if key not in st.session_state:
+            st.session_state[key] = value
 
 
 def render_sidebar():
-    st.sidebar.image("https://img.icons8.com/fluency/96/quantum-computing.png", width=80)
-    st.sidebar.title("Configuration")
-    
-    st.sidebar.header("Bank Profile")
-    bank_name = st.sidebar.text_input("Bank Name", value="Sample Bank Corp")
-    bank_size = st.sidebar.selectbox(
-        "Bank Size",
-        ["Small", "Medium", "Large", "Enterprise"],
-        index=2
-    )
-    
-    st.sidebar.header("Quantum Scenario")
-    quantum_advancement = st.sidebar.slider(
-        "Quantum Advancement Factor",
-        min_value=0.5,
-        max_value=2.0,
-        value=1.0,
-        step=0.1,
-        help="Higher values simulate faster quantum computing advancement"
-    )
-    
-    quantum_readiness = st.sidebar.selectbox(
-        "Current Quantum Readiness",
-        ["None", "Low", "Medium", "High"],
-        index=1
-    )
-    
-    risk_tolerance = st.sidebar.selectbox(
-        "Risk Tolerance",
-        ["Low", "Medium", "High"],
-        index=1
-    )
-    
-    st.sidebar.header("Analysis Options")
-    use_sample_data = st.sidebar.checkbox("Use Sample Bank Inventory", value=True)
-    
-    return {
-        "bank_name": bank_name,
-        "bank_size": bank_size,
-        "quantum_advancement": quantum_advancement,
-        "quantum_readiness": quantum_readiness,
-        "risk_tolerance": risk_tolerance,
-        "use_sample_data": use_sample_data
+    """Render sidebar configuration with clear explanations"""
+    with st.sidebar:
+        st.markdown("""
+        <div style="text-align: center; margin-bottom: 1.5rem;">
+            <div style="font-size: 3.5rem;">🔐</div>
+            <h2 style="color: #0969da; margin: 0.5rem 0;">Quantum Risk<br/>Analyzer</h2>
+            <p style="color: #57606a; font-size: 0.9rem; margin-top: 0.5rem;">Configure your quantum risk assessment</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown("---")
+
+        # === Bank Information ===
+        st.subheader("🏦 Bank Information")
+        
+        bank_name = st.text_input(
+            "Bank Name",
+            value="Acme Bank Corp",
+            help="Enter your bank or organization name for report generation"
+        )
+        
+        bank_size = st.selectbox(
+            "Bank Size",
+            ["Small", "Medium", "Large", "Enterprise"],
+            index=2,
+            help="""
+            - Small: < 100 employees, local operations
+            - Medium: 100-1000 employees, regional
+            - Large: 1000-5000 employees, national
+            - Enterprise: 5000+ employees, global
+            """
+        )
+
+        st.markdown("---")
+
+        # === Risk Assessment Settings ===
+        st.subheader("⚙️ Risk Assessment Settings")
+        
+        quantum_advancement = st.slider(
+            "Quantum Advancement Factor",
+            0.5, 2.0, 1.0, 0.1,
+            help="""
+            Adjust how quickly you believe quantum computers will advance.
+            
+            - 0.5 = Conservative (quantum threats are further away)
+            - 1.0 = Moderate (balanced timeline)
+            - 2.0 = Aggressive (quantum threats are imminent)
+            """
+        )
+        
+        quantum_readiness = st.selectbox(
+            "Current Quantum Readiness Level",
+            ["None", "Low", "Medium", "High"],
+            index=1,
+            help="""
+            Your organization's current quantum readiness.
+            
+            - None: No quantum planning started
+            - Low: Initial awareness only
+            - Medium: Some planning and assessment done
+            - High: Active migration program in place
+            """
+        )
+        
+        risk_tolerance = st.selectbox(
+            "Risk Tolerance",
+            ["Low", "Medium", "High"],
+            index=1,
+            help="""
+            Your organization's appetite for risk.
+            
+            - Low: Prioritize security, migrate early
+            - Medium: Balance security and cost
+            - High: Cost-conscious, migrate later
+            """
+        )
+
+        st.markdown("---")
+
+        # === Data & Features ===
+        st.subheader("📊 Data & Features")
+        
+        use_sample_data = st.checkbox(
+            "Use Sample Data",
+            value=True,
+            help="Use built-in sample cryptographic inventory for demonstration. Disable to upload your own data."
+        )
+        
+        show_ai = st.checkbox(
+            "Enable AI Recommendations",
+            value=True,
+            help="Show AI-powered migration recommendations and action plans"
+        )
+
+        st.markdown("---")
+
+        # === Quick Stats ===
+        if st.session_state.risk_data is not None:
+            st.subheader("📈 Quick Stats")
+            df = st.session_state.risk_data
+            critical_count = len(df[df['Threat Level'] == 'CRITICAL'])
+            total_count = len(df)
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                st.metric(
+                    "Critical Assets",
+                    critical_count,
+                    help="Assets requiring immediate migration"
+                )
+            with col2:
+                st.metric(
+                    "Total Assets",
+                    total_count,
+                    help="All cryptographic assets in inventory"
+                )
+            
+            if total_count > 0:
+                critical_pct = (critical_count / total_count) * 100
+                st.progress(critical_pct / 100, text=f"Critical: {critical_pct:.1f}%")
+
+        return {
+            "bank_name": bank_name,
+            "bank_size": bank_size,
+            "quantum_advancement": quantum_advancement,
+            "quantum_readiness": quantum_readiness,
+            "risk_tolerance": risk_tolerance,
+            "use_sample_data": use_sample_data,
+            "show_ai": show_ai
+        }
+
+
+def create_risk_gauge(df):
+    """Create risk gauge chart with white theme colors"""
+    critical_pct = len(df[df['Threat Level'] == 'CRITICAL']) / len(df) * 100 if len(df) > 0 else 0
+    high_pct = len(df[df['Threat Level'] == 'HIGH']) / len(df) * 100 if len(df) > 0 else 0
+    score = min(100, (critical_pct * 2 + high_pct + df['Vulnerability Score'].mean()) / 3) if len(df) > 0 else 0
+
+    fig = go.Figure(go.Indicator(
+        mode="gauge+number",
+        value=score,
+        domain={'x': [0, 1], 'y': [0, 1]},
+        title={'text': "Risk Score", 'font': {'size': 16, 'color': '#1f2328'}},
+        gauge={
+            'axis': {'range': [0, 100], 'tickcolor': '#57606a'},
+            'bar': {'color': "#0969da"},
+            'bgcolor': "#f6f8fa",
+            'bordercolor': "#d0d7de",
+            'steps': [
+                {'range': [0, 20], 'color': '#1a7f37'},
+                {'range': [20, 40], 'color': '#3fb950'},
+                {'range': [40, 60], 'color': '#d4a72c'},
+                {'range': [60, 80], 'color': '#9a6700'},
+                {'range': [80, 100], 'color': '#cf222e'}
+            ]
+        }
+    ))
+    fig.update_layout(height=250, paper_bgcolor="#ffffff")
+    return fig
+
+
+def create_threat_pie(df):
+    """Create threat level pie chart with white theme colors"""
+    counts = df['Threat Level'].value_counts()
+    colors = {
+        'CRITICAL': '#cf222e', 
+        'HIGH': '#9a6700', 
+        'MEDIUM': '#d4a72c', 
+        'LOW': '#1a7f37', 
+        'MINIMAL': '#0969da'
     }
 
+    fig = px.pie(
+        values=counts.values,
+        names=counts.index,
+        color=counts.index,
+        color_discrete_map=colors,
+        hole=0.4
+    )
+    fig.update_layout(
+        height=350, 
+        title="Threat Distribution",
+        paper_bgcolor="#ffffff",
+        plot_bgcolor="#f6f8fa",
+        font=dict(color="#1f2328")
+    )
+    return fig
 
-def render_header():
-    st.markdown('<h1 class="main-header">Quantum Computing Risk Analyst for Banks</h1>', unsafe_allow_html=True)
-    st.markdown("""
-    <p style="text-align: center; color: #666; font-size: 1.1rem;">
-        Comprehensive quantum computing threat assessment and migration planning platform
-    </p>
-    """, unsafe_allow_html=True)
+
+def create_timeline_chart(df):
+    """Create threat timeline bar chart"""
+    chart_df = df.sort_values('Years to Threat')
+
+    colors = {'CRITICAL': '#E74C3C', 'HIGH': '#E67E22', 'MEDIUM': '#F1C40F', 'LOW': '#2ECC71', 'MINIMAL': '#3498DB'}
+    bar_colors = [colors.get(level, '#95A5A6') for level in chart_df['Threat Level']]
+
+    fig = go.Figure(go.Bar(
+        x=chart_df['Asset Name'],
+        y=chart_df['Years to Threat'],
+        marker_color=bar_colors,
+        text=chart_df['Years to Threat'].round(1)
+    ))
+
+    fig.add_hline(y=5, line_dash="dash", line_color="red", annotation_text="Critical (5 yrs)")
+    fig.update_layout(
+        title="Threat Timeline",
+        xaxis_title="Asset",
+        yaxis_title="Years to Threat",
+        xaxis_tickangle=-45,
+        height=400
+    )
+    return fig
 
 
-def render_executive_summary(risk_data: pd.DataFrame, config: dict):
-    st.header("Executive Summary")
-    
-    col1, col2, col3, col4 = st.columns(4)
-    
-    critical_count = len(risk_data[risk_data['Threat Level'] == 'CRITICAL'])
-    high_count = len(risk_data[risk_data['Threat Level'] == 'HIGH'])
-    total_assets = len(risk_data)
-    avg_vulnerability = risk_data['Vulnerability Score'].mean()
-    total_migration_cost = risk_data['Est. Migration Cost ($)'].sum()
-    avg_years_to_threat = risk_data['Years to Threat'].mean()
-    
+def create_priority_chart(df):
+    """Create migration priority chart"""
+    chart_df = df.sort_values('Migration Priority', ascending=True)
+
+    fig = px.bar(
+        x=chart_df['Migration Priority'],
+        y=chart_df['Asset Name'],
+        orientation='h',
+        color=chart_df['Threat Level'],
+        color_discrete_map={'CRITICAL': '#E74C3C', 'HIGH': '#E67E22', 'MEDIUM': '#F1C40F', 'LOW': '#2ECC71', 'MINIMAL': '#3498DB'},
+        title="Migration Priority"
+    )
+    fig.update_layout(height=400, xaxis_title="Priority Score")
+    return fig
+
+
+def create_cost_pie(estimate):
+    """Create cost breakdown pie chart"""
+    labels = list(estimate.cost_breakdown.keys())
+    values = list(estimate.cost_breakdown.values())
+
+    fig = px.pie(values=values, names=labels, hole=0.4, title="Cost Breakdown")
+    fig.update_layout(height=350)
+    return fig
+
+
+def render_dashboard(df, config):
+    """Render main dashboard"""
+
+    # Metrics
+    critical = len(df[df['Threat Level'] == 'CRITICAL'])
+    high = len(df[df['Threat Level'] == 'HIGH'])
+    avg_vuln = df['Vulnerability Score'].mean()
+    total_cost = df['Est. Migration Cost ($)'].sum()
+    avg_years = df['Years to Threat'].mean()
+
+    col1, col2, col3, col4, col5 = st.columns(5)
+
+    colors = ["#E74C3C", "#E67E22", "#3498DB", "#9B59B6", "#2ECC71"]
+
     with col1:
-        st.metric(
-            label="Total Cryptographic Assets",
-            value=total_assets,
-            delta=f"{critical_count} Critical"
-        )
-    
+        st.markdown(f"""
+        <div class="metric-card" style="background: linear-gradient(135deg, {colors[0]}20, {colors[0]}40);">
+            <div style="font-size: 2rem;">🔴</div>
+            <div style="font-size: 0.8rem; color: #666;">CRITICAL</div>
+            <div style="font-size: 1.8rem; font-weight: bold; color: {colors[0]};">{critical}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
     with col2:
-        st.metric(
-            label="Average Vulnerability Score",
-            value=f"{avg_vulnerability:.1f}%",
-            delta=f"{high_count} High Risk",
-            delta_color="inverse"
-        )
-    
+        st.markdown(f"""
+        <div class="metric-card" style="background: linear-gradient(135deg, {colors[1]}20, {colors[1]}40);">
+            <div style="font-size: 2rem;">🟠</div>
+            <div style="font-size: 0.8rem; color: #666;">HIGH RISK</div>
+            <div style="font-size: 1.8rem; font-weight: bold; color: {colors[1]};">{high}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
     with col3:
-        st.metric(
-            label="Est. Total Migration Cost",
-            value=f"${total_migration_cost/1e6:.2f}M",
-            delta="Full portfolio"
-        )
-    
+        st.markdown(f"""
+        <div class="metric-card" style="background: linear-gradient(135deg, {colors[2]}20, {colors[2]}40);">
+            <div style="font-size: 2rem;">📊</div>
+            <div style="font-size: 0.8rem; color: #666;">AVG VULN</div>
+            <div style="font-size: 1.8rem; font-weight: bold; color: {colors[2]};">{avg_vuln:.0f}%</div>
+        </div>
+        """, unsafe_allow_html=True)
+
     with col4:
-        st.metric(
-            label="Avg. Years to Threat",
-            value=f"{avg_years_to_threat:.1f} yrs",
-            delta="Planning window",
-            delta_color="off"
-        )
-    
+        st.markdown(f"""
+        <div class="metric-card" style="background: linear-gradient(135deg, {colors[3]}20, {colors[3]}40);">
+            <div style="font-size: 2rem;">💰</div>
+            <div style="font-size: 0.8rem; color: #666;">COST</div>
+            <div style="font-size: 1.5rem; font-weight: bold; color: {colors[3]};">${total_cost/1e6:.1f}M</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col5:
+        st.markdown(f"""
+        <div class="metric-card" style="background: linear-gradient(135deg, {colors[4]}20, {colors[4]}40);">
+            <div style="font-size: 2rem;">⏱️</div>
+            <div style="font-size: 0.8rem; color: #666;">TIME WINDOW</div>
+            <div style="font-size: 1.8rem; font-weight: bold; color: {colors[4]};">{avg_years:.1f} yrs</div>
+        </div>
+        """, unsafe_allow_html=True)
+
     st.markdown("---")
-    
+
+    # Charts
     col1, col2 = st.columns(2)
-    
+
     with col1:
-        st.subheader("Key Findings")
-        
-        if critical_count > 0:
-            st.error(f"**{critical_count} assets** require immediate attention with CRITICAL threat level")
-        
-        vulnerable_algos = risk_data[risk_data['Vulnerability Score'] > 80]['Algorithm'].unique()
-        if len(vulnerable_algos) > 0:
-            st.warning(f"Highly vulnerable algorithms in use: {', '.join(vulnerable_algos)}")
-        
-        urgent_assets = risk_data[risk_data['Years to Threat'] < 5]['Asset Name'].tolist()
-        if urgent_assets:
-            st.info(f"Assets with <5 year threat window: {', '.join(urgent_assets[:3])}...")
-    
+        st.plotly_chart(create_risk_gauge(df), use_container_width=True)
+
     with col2:
-        st.subheader("Recommended Actions")
-        st.markdown("""
-        1. **Immediate**: Inventory all cryptographic assets and classify by sensitivity
-        2. **Short-term**: Begin pilot programs for post-quantum cryptography (PQC)
-        3. **Medium-term**: Develop comprehensive migration roadmap
-        4. **Long-term**: Implement crypto-agility framework for ongoing adaptation
-        """)
+        st.plotly_chart(create_threat_pie(df), use_container_width=True)
 
 
-def render_risk_analysis_tab(risk_data: pd.DataFrame, config: dict):
-    st.header("Risk Analysis Dashboard")
-    
-    tab1, tab2, tab3, tab4 = st.tabs([
-        "Vulnerability Overview", "Threat Timeline", "Priority Matrix", "Detailed Analysis"
-    ])
-    
+def render_risk_analysis(df):
+    """Render risk analysis tab"""
+
+    tab1, tab2, tab3 = st.tabs(["Timeline", "Priority", "Details"])
+
     with tab1:
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.subheader("Risk Heatmap")
-            heatmap = create_risk_heatmap(risk_data)
-            st.plotly_chart(heatmap, use_container_width=True)
-        
-        with col2:
-            st.subheader("Threat Level Distribution")
-            pie_chart = create_threat_distribution_pie(risk_data)
-            st.plotly_chart(pie_chart, use_container_width=True)
-        
-        st.subheader("Algorithm Vulnerability Radar")
-        radar = create_algorithm_vulnerability_radar(risk_data)
-        st.plotly_chart(radar, use_container_width=True)
-    
+        st.plotly_chart(create_timeline_chart(df), use_container_width=True)
+
     with tab2:
-        st.subheader("Quantum Threat Timeline")
-        timeline_chart = create_threat_timeline_chart(risk_data)
-        st.plotly_chart(timeline_chart, use_container_width=True)
-        
-        st.info("""
-        **Understanding the Timeline:**
-        - Assets below the 5-year critical threshold require immediate migration planning
-        - Assets below the 10-year planning horizon should be included in medium-term roadmap
-        - Quantum advancement factor affects all timelines proportionally
-        """)
-    
+        st.plotly_chart(create_priority_chart(df), use_container_width=True)
+
     with tab3:
-        st.subheader("Migration Priority Matrix")
-        priority_chart = create_migration_priority_chart(risk_data)
-        st.plotly_chart(priority_chart, use_container_width=True)
-        
-        st.subheader("Cost vs. Vulnerability Analysis")
-        scatter = create_cost_vs_risk_scatter(risk_data)
-        st.plotly_chart(scatter, use_container_width=True)
-    
-    with tab4:
-        st.subheader("Detailed Asset Analysis")
-        
-        filter_col1, filter_col2, filter_col3 = st.columns(3)
-        
-        with filter_col1:
-            threat_filter = st.multiselect(
-                "Filter by Threat Level",
-                options=risk_data['Threat Level'].unique().tolist(),
-                default=risk_data['Threat Level'].unique().tolist()
-            )
-        
-        with filter_col2:
-            usage_filter = st.multiselect(
-                "Filter by Usage Area",
-                options=risk_data['Usage Area'].unique().tolist(),
-                default=risk_data['Usage Area'].unique().tolist()
-            )
-        
-        with filter_col3:
-            min_vuln = st.slider("Minimum Vulnerability Score", 0, 100, 0)
-        
-        filtered_data = risk_data[
-            (risk_data['Threat Level'].isin(threat_filter)) &
-            (risk_data['Usage Area'].isin(usage_filter)) &
-            (risk_data['Vulnerability Score'] >= min_vuln)
-        ]
-        
         st.dataframe(
-            filtered_data,
+            df,
             use_container_width=True,
             hide_index=True,
             column_config={
                 "Vulnerability Score": st.column_config.ProgressColumn(
-                    "Vulnerability Score",
+                    "Vuln %",
                     format="%.1f%%",
                     min_value=0,
-                    max_value=100,
+                    max_value=100
                 ),
-                "Est. Migration Cost ($)": st.column_config.NumberColumn(
-                    "Est. Migration Cost ($)",
-                    format="$%d"
-                )
+                "Est. Migration Cost ($)": st.column_config.NumberColumn(format="$%d")
             }
         )
 
 
-def render_compliance_tab(config: dict):
-    st.header("Regulatory Compliance Assessment")
-    
+def render_compliance(config):
+    """Render compliance tab"""
+
     checker = QuantumComplianceChecker(
         bank_size=config["bank_size"],
         quantum_readiness_level=config["quantum_readiness"]
     )
-    
+
     col1, col2 = st.columns([1, 2])
-    
+
     with col1:
-        compliance_score = checker.calculate_overall_compliance_score()
-        gauge = create_compliance_gauge(compliance_score)
-        st.plotly_chart(gauge, use_container_width=True)
-        
-        if compliance_score < 30:
-            st.error("Critical compliance gaps detected. Immediate action required.")
-        elif compliance_score < 50:
-            st.warning("Significant compliance improvements needed.")
-        elif compliance_score < 70:
-            st.info("Moderate compliance level. Continue improvement efforts.")
-        else:
-            st.success("Good compliance posture. Maintain current controls.")
-    
+        score = checker.calculate_overall_compliance_score()
+        fig = go.Figure(go.Indicator(
+            mode="gauge+number",
+            value=score,
+            title={'text': "Compliance Score"},
+            gauge={
+                'axis': {'range': [0, 100]},
+                'bar': {'color': "#0F4C75"},
+                'steps': [
+                    {'range': [0, 30], 'color': '#E74C3C'},
+                    {'range': [30, 50], 'color': '#E67E22'},
+                    {'range': [50, 70], 'color': '#F1C40F'},
+                    {'range': [70, 100], 'color': '#27AE60'}
+                ]
+            }
+        ))
+        fig.update_layout(height=300)
+        st.plotly_chart(fig, use_container_width=True)
+
     with col2:
-        st.subheader("Priority Remediation Actions")
-        priority_actions = checker.get_priority_actions()
-        
-        if priority_actions:
-            for i, action in enumerate(priority_actions[:5], 1):
-                with st.expander(f"{i}. {action['Regulation']} - {action['Risk']}"):
-                    st.write(f"**Action:** {action['Action']}")
-                    st.write(f"**Estimated Effort:** {action['Effort']} days")
-        else:
-            st.success("No immediate priority actions required.")
-    
-    st.subheader("Detailed Compliance Report")
-    compliance_report = checker.generate_compliance_report()
-    
-    st.dataframe(
-        compliance_report,
-        use_container_width=True,
-        hide_index=True,
-        column_config={
-            "Effort (Days)": st.column_config.NumberColumn(
-                "Effort (Days)",
-                format="%d days"
-            )
-        }
-    )
-    
-    csv = compliance_report.to_csv(index=False)
-    st.download_button(
-        label="Download Compliance Report (CSV)",
-        data=csv,
-        file_name=f"compliance_report_{datetime.now().strftime('%Y%m%d')}.csv",
-        mime="text/csv"
-    )
+        st.subheader("Priority Actions")
+        actions = checker.get_priority_actions()
+        for i, action in enumerate(actions[:5], 1):
+            with st.expander(f"{i}. {action['Regulation']} - {action['Risk']}"):
+                st.write(f"**Action:** {action['Action']}")
+                st.write(f"**Effort:** {action['Effort']} days")
+
+    st.subheader("Full Compliance Report")
+    report = checker.generate_compliance_report()
+    st.dataframe(report, use_container_width=True, hide_index=True)
+
+    csv = report.to_csv(index=False)
+    st.download_button("📥 Download CSV", csv, "compliance_report.csv", "text/csv")
 
 
-def render_cost_tab(config: dict, risk_data: pd.DataFrame):
-    st.header("Migration Cost Analysis")
-    
+def render_cost_analysis(df, config):
+    """Render cost analysis tab"""
+
     estimator = QuantumMigrationCostEstimator(
         bank_size=config["bank_size"],
         risk_tolerance=config["risk_tolerance"]
     )
-    
-    algorithms = risk_data['Algorithm'].unique().tolist()
-    usage_areas = risk_data['Usage Area'].unique().tolist()
-    
+
     estimate = estimator.calculate_total_migration_cost(
-        algorithms=algorithms,
-        usage_areas=usage_areas
+        algorithms=df['Algorithm'].unique().tolist(),
+        usage_areas=df['Usage Area'].unique().tolist()
     )
-    
+
     col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        st.metric(
-            "Total Estimated Cost",
-            f"${estimate.total_cost/1e6:.2f}M"
-        )
-    
-    with col2:
-        st.metric(
-            "Project Timeline",
-            f"{estimate.timeline_months} months"
-        )
-    
-    with col3:
-        st.metric(
-            "Risk Contingency",
-            f"${estimate.risk_contingency/1e6:.2f}M"
-        )
-    
-    with col4:
-        st.metric(
-            "ROI Breakeven",
-            f"{estimate.roi_years:.1f} years"
-        )
-    
+    col1.metric("Total Cost", f"${estimate.total_cost/1e6:.2f}M")
+    col2.metric("Timeline", f"{estimate.timeline_months} months")
+    col3.metric("Risk Contingency", f"${estimate.risk_contingency/1e6:.2f}M")
+    col4.metric("ROI Breakeven", f"{estimate.roi_years:.1f} years")
+
     st.markdown("---")
-    
-    tab1, tab2, tab3 = st.tabs(["Cost Breakdown", "Project Timeline", "ROI Analysis"])
-    
+
+    tab1, tab2 = st.tabs(["Cost Breakdown", "ROI Analysis"])
+
     with tab1:
         col1, col2 = st.columns(2)
-        
         with col1:
-            st.subheader("Cost Distribution")
-            cost_pie = create_cost_breakdown_chart(estimate.cost_breakdown)
-            st.plotly_chart(cost_pie, use_container_width=True)
-        
+            st.plotly_chart(create_cost_pie(estimate), use_container_width=True)
         with col2:
-            st.subheader("Cost Components")
             cost_df = pd.DataFrame([
                 {"Component": k, "Cost ($)": v}
                 for k, v in estimate.cost_breakdown.items()
             ])
-            cost_df = cost_df.sort_values("Cost ($)", ascending=False)
-            st.dataframe(
-                cost_df,
-                use_container_width=True,
-                hide_index=True,
-                column_config={
-                    "Cost ($)": st.column_config.NumberColumn(
-                        "Cost ($)",
-                        format="$%d"
-                    )
-                }
-            )
-    
+            st.dataframe(cost_df.sort_values("Cost ($)", ascending=False), use_container_width=True, hide_index=True)
+
     with tab2:
-        st.subheader("Migration Project Timeline")
-        timeline_df = estimator.generate_cost_timeline()
-        gantt = create_timeline_gantt_chart(timeline_df)
-        st.plotly_chart(gantt, use_container_width=True)
-        
-        st.subheader("Phase Details")
-        st.dataframe(
-            timeline_df,
-            use_container_width=True,
-            hide_index=True,
-            column_config={
-                "Phase Cost ($)": st.column_config.NumberColumn(
-                    "Phase Cost ($)",
-                    format="$%d"
-                ),
-                "Cumulative Cost ($)": st.column_config.NumberColumn(
-                    "Cumulative Cost ($)",
-                    format="$%d"
-                )
-            }
-        )
-    
-    with tab3:
-        st.subheader("Return on Investment Analysis")
         roi_df = estimator.generate_roi_analysis(estimate)
-        roi_chart = create_roi_chart(roi_df, estimate.total_cost)
-        st.plotly_chart(roi_chart, use_container_width=True)
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.subheader("10-Year ROI Projection")
-            st.dataframe(
-                roi_df,
-                use_container_width=True,
-                hide_index=True,
-                column_config={
-                    "Annual Risk Savings ($)": st.column_config.NumberColumn(format="$%d"),
-                    "Cumulative Savings ($)": st.column_config.NumberColumn(format="$%d"),
-                    "Net Benefit ($)": st.column_config.NumberColumn(format="$%d"),
-                    "ROI (%)": st.column_config.NumberColumn(format="%.1f%%")
-                }
-            )
-        
-        with col2:
-            st.subheader("Scenario Comparison")
-            scenarios = estimator.compare_scenarios()
-            st.dataframe(
-                scenarios,
-                use_container_width=True,
-                hide_index=True,
-                column_config={
-                    "Total Cost ($)": st.column_config.NumberColumn(format="$%d"),
-                    "ROI (Years)": st.column_config.NumberColumn(format="%.1f")
-                }
-            )
+        st.dataframe(roi_df, use_container_width=True, hide_index=True)
 
 
-def render_asset_management_tab(config: dict):
-    st.header("Cryptographic Asset Management")
-    
-    st.subheader("Add New Cryptographic Asset")
-    
-    col1, col2 = st.columns(2)
-    
+def render_ai_recommendations(df):
+    """Render AI recommendations tab"""
+
+    if st.session_state.recommendations is None:
+        engine = AIRecommendationEngine(df)
+        st.session_state.recommendations = engine.analyze_and_generate_recommendations()
+
+    recs = st.session_state.recommendations
+
+    critical_count = len([r for r in recs if r.priority == RecommendationPriority.CRITICAL])
+    high_count = len([r for r in recs if r.priority == RecommendationPriority.HIGH])
+
+    col1, col2, col3 = st.columns(3)
+
     with col1:
-        asset_name = st.text_input("Asset Name", placeholder="e.g., Payment Gateway TLS")
-        algorithm = st.selectbox(
-            "Cryptographic Algorithm",
-            options=[algo.value for algo in CryptoAlgorithm]
-        )
-        usage_area = st.selectbox(
-            "Usage Area",
-            options=["Core Banking", "Payment Processing", "Customer Authentication",
-                    "Internal Communications", "Data Storage", "API Security",
-                    "Mobile Banking", "ATM Network"]
-        )
-    
+        st.markdown(f"""
+        <div style="background: linear-gradient(135deg, #E74C3C, #C0392B); padding: 1.5rem; border-radius: 12px; color: white; text-align: center;">
+            <div style="font-size: 2rem;">🔴</div>
+            <div style="font-size: 1.5rem; font-weight: bold;">{critical_count}</div>
+            <div style="font-size: 0.8rem;">Critical Priority</div>
+        </div>
+        """, unsafe_allow_html=True)
+
     with col2:
-        key_size = st.number_input("Key Size (bits)", min_value=64, max_value=8192, value=2048)
-        data_sensitivity = st.selectbox(
-            "Data Sensitivity",
-            options=["Critical", "High", "Medium", "Low"]
-        )
-        data_volume = st.number_input("Estimated Data Volume (GB)", min_value=1, max_value=100000, value=100)
+        st.markdown(f"""
+        <div style="background: linear-gradient(135deg, #E67E22, #D35400); padding: 1.5rem; border-radius: 12px; color: white; text-align: center;">
+            <div style="font-size: 2rem;">🟠</div>
+            <div style="font-size: 1.5rem; font-weight: bold;">{high_count}</div>
+            <div style="font-size: 0.8rem;">High Priority</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col3:
+        st.markdown(f"""
+        <div style="background: linear-gradient(135deg, #0F4C75, #1B262C); padding: 1.5rem; border-radius: 12px; color: white; text-align: center;">
+            <div style="font-size: 2rem;">📋</div>
+            <div style="font-size: 1.5rem; font-weight: bold;">{len(recs)}</div>
+            <div style="font-size: 0.8rem;">Total Recommendations</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("---")
+
+    for i, rec in enumerate(recs):
+        color = {'CRITICAL': '#E74C3C', 'HIGH': '#E67E22', 'MEDIUM': '#F1C40F', 'LOW': '#2ECC71'}.get(rec.priority.value, '#95A5A6')
+
+        with st.expander(f"[{rec.priority.value}] {rec.title} - {rec.asset_name}", expanded=(i < 3)):
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                st.write(f"**Category:** {rec.category}")
+                st.write(rec.description)
+            with col2:
+                st.metric("Effort", f"{rec.estimated_effort_days} days")
+            st.markdown("**Actions:**")
+            for action in rec.actions:
+                st.markdown(f"- {action}")
+            st.warning(f"**Risk if Ignored:** {rec.risk_if_ignored}")
+
+
+def render_file_upload():
+    """Render file upload tab for Excel/CSV files"""
     
-    if st.button("Add Asset to Inventory"):
-        new_asset = {
-            "name": asset_name,
-            "algorithm": algorithm,
-            "key_size": key_size,
-            "usage_area": usage_area,
-            "data_sensitivity": data_sensitivity,
-            "data_volume": data_volume
-        }
-        st.session_state.custom_assets.append(new_asset)
-        st.success(f"Added asset: {asset_name}")
+    st.subheader("📁 Upload Asset Inventory")
     
+    st.markdown("""
+    <div class="info-box">
+    <strong>Supported Formats:</strong> Excel (.xlsx, .xls), CSV (.csv)
+    <br/><br/>
+    <strong>Required Columns:</strong><br/>
+    • Asset Name<br/>
+    • Algorithm<br/>
+    • Key Size<br/>
+    • Usage Area<br/>
+    • Data Sensitivity<br/>
+    • Data Volume (GB)
+    </div>
+    """, unsafe_allow_html=True)
+    
+    uploaded_file = st.file_uploader(
+        "Choose your asset inventory file",
+        type=['xlsx', 'xls', 'csv'],
+        help="Upload your cryptographic asset inventory for analysis"
+    )
+    
+    if uploaded_file is not None:
+        try:
+            file_bytes = uploaded_file.getvalue()
+            file_extension = uploaded_file.name.split('.')[-1].lower()
+            
+            with st.spinner(f"Processing {uploaded_file.name}..."):
+                success, assets, error = FileParser.parse_file(file_bytes, file_extension)
+            
+            if success:
+                st.success(f"✅ Successfully loaded {len(assets)} assets from {uploaded_file.name}")
+                
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.metric("Assets Imported", len(assets))
+                with col2:
+                    st.metric("File Type", file_extension.upper())
+                
+                preview = pd.DataFrame([{
+                    "Asset Name": a.name,
+                    "Algorithm": a.algorithm.value,
+                    "Key Size": a.key_size,
+                    "Usage Area": a.usage_area,
+                    "Sensitivity": a.data_sensitivity,
+                    "Data Volume (GB)": a.estimated_data_volume_gb
+                } for a in assets])
+                
+                st.subheader("Preview of Imported Data")
+                st.dataframe(preview, use_container_width=True)
+                
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.button("🚀 Use Uploaded Data for Analysis", use_container_width=True):
+                        st.session_state.uploaded_assets = assets
+                        st.session_state.uploaded_file_name = uploaded_file.name
+                        st.session_state.use_uploaded_data = True
+                        st.session_state.recommendations = None
+                        st.success("Data ready! Go to the Dashboard tab to view analysis.")
+                
+                with col2:
+                    if st.button("🗑️ Clear Upload", use_container_width=True):
+                        st.session_state.uploaded_assets = None
+                        st.session_state.uploaded_file_name = None
+                        st.session_state.use_uploaded_data = False
+                        st.session_state.recommendations = None
+                        st.rerun()
+            else:
+                st.error(f"❌ Error: {error}")
+                
+        except Exception as e:
+            st.error(f"Error processing file: {str(e)}")
+    
+    if st.session_state.uploaded_assets is not None:
+        st.markdown("---")
+        st.success(f"📊 Current data source: {st.session_state.uploaded_file_name}")
+
+
+def render_asset_management():
+    """Render asset management tab"""
+
+    st.subheader("Add New Asset")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        asset_name = st.text_input("Asset Name")
+        algorithm = st.selectbox("Algorithm", [a.value for a in CryptoAlgorithm])
+        usage_area = st.selectbox("Usage Area", ["Core Banking", "Payment Processing", "Customer Authentication", "Data Storage", "API Security", "Mobile Banking", "ATM Network"])
+
+    with col2:
+        key_size = st.number_input("Key Size (bits)", value=2048)
+        data_sensitivity = st.selectbox("Sensitivity", ["Critical", "High", "Medium", "Low"])
+        data_volume = st.number_input("Data Volume (GB)", value=100)
+
+    if st.button("➕ Add Asset"):
+        if asset_name:
+            st.session_state.custom_assets.append({
+                "name": asset_name,
+                "algorithm": algorithm,
+                "key_size": key_size,
+                "usage_area": usage_area,
+                "data_sensitivity": data_sensitivity,
+                "data_volume": data_volume
+            })
+            st.success(f"Added: {asset_name}")
+            st.rerun()
+
     if st.session_state.custom_assets:
-        st.subheader("Custom Assets Added")
-        custom_df = pd.DataFrame(st.session_state.custom_assets)
-        st.dataframe(custom_df, use_container_width=True, hide_index=True)
-        
-        if st.button("Clear All Custom Assets"):
+        st.subheader("Custom Assets")
+        st.dataframe(pd.DataFrame(st.session_state.custom_assets), use_container_width=True)
+        if st.button("🗑️ Clear All"):
             st.session_state.custom_assets = []
             st.rerun()
 
 
-def render_reports_tab(risk_data: pd.DataFrame, config: dict):
-    st.header("Report Generation")
-    
-    st.subheader("Available Reports")
-    
+def render_reports(df, config):
+    """Render reports tab"""
+
+    st.subheader("Download Reports")
+
     col1, col2, col3 = st.columns(3)
-    
+
     with col1:
-        st.markdown("### Executive Summary Report")
-        st.write("High-level overview for board and C-suite")
-        if st.button("Generate Executive Report"):
-            report_content = generate_executive_report(risk_data, config)
-            st.download_button(
-                "Download Executive Report",
-                report_content,
-                file_name=f"executive_report_{datetime.now().strftime('%Y%m%d')}.md",
-                mime="text/markdown"
-            )
-    
+        st.info("📋 **Executive Summary**\n\nFor board and C-suite")
+        if st.button("Download Executive Report", use_container_width=True):
+            report = f"""# Executive Summary\n\nBank: {config['bank_name']}\nDate: {datetime.now().strftime('%Y-%m-%d')}\n\n## Key Findings\n- Total Assets: {len(df)}\n- Critical: {len(df[df['Threat Level']=='CRITICAL'])}\n- High Risk: {len(df[df['Threat Level']=='HIGH'])}\n- Total Cost: ${df['Est. Migration Cost ($)'].sum()/1e6:.2f}M"""
+            st.download_button("📥 Download", report, "executive_report.md", "text/markdown")
+
     with col2:
-        st.markdown("### Technical Assessment Report")
-        st.write("Detailed technical analysis for IT teams")
-        csv = risk_data.to_csv(index=False)
-        st.download_button(
-            "Download Technical Report (CSV)",
-            csv,
-            file_name=f"technical_assessment_{datetime.now().strftime('%Y%m%d')}.csv",
-            mime="text/csv"
-        )
-    
+        st.success("🔧 **Technical Report**\n\nFor IT and security teams")
+        csv = df.to_csv(index=False)
+        st.download_button("📥 Download", csv, "technical_report.csv", "text/csv", use_container_width=True)
+
     with col3:
-        st.markdown("### Compliance Gap Report")
-        st.write("Regulatory compliance status and gaps")
-        checker = QuantumComplianceChecker(
-            bank_size=config["bank_size"],
-            quantum_readiness_level=config["quantum_readiness"]
-        )
+        st.warning("📜 **Compliance Report**\n\nRegulatory gap analysis")
+        checker = QuantumComplianceChecker(bank_size=config["bank_size"], quantum_readiness_level=config["quantum_readiness"])
         compliance_csv = checker.generate_compliance_report().to_csv(index=False)
-        st.download_button(
-            "Download Compliance Report (CSV)",
-            compliance_csv,
-            file_name=f"compliance_gaps_{datetime.now().strftime('%Y%m%d')}.csv",
-            mime="text/csv"
-        )
-
-
-def generate_executive_report(risk_data: pd.DataFrame, config: dict) -> str:
-    critical_count = len(risk_data[risk_data['Threat Level'] == 'CRITICAL'])
-    high_count = len(risk_data[risk_data['Threat Level'] == 'HIGH'])
-    total_cost = risk_data['Est. Migration Cost ($)'].sum()
-    avg_timeline = risk_data['Years to Threat'].mean()
-    
-    report = f"""# Quantum Computing Risk Assessment
-## Executive Summary Report
-
-**Bank Name:** {config['bank_name']}
-**Assessment Date:** {datetime.now().strftime('%B %d, %Y')}
-**Bank Size Category:** {config['bank_size']}
-
----
-
-## Key Findings
-
-### Threat Overview
-- **Total Cryptographic Assets Analyzed:** {len(risk_data)}
-- **Critical Threat Assets:** {critical_count}
-- **High Threat Assets:** {high_count}
-- **Average Time to Quantum Threat:** {avg_timeline:.1f} years
-
-### Financial Impact
-- **Estimated Total Migration Cost:** ${total_cost/1e6:.2f} million
-- **Average Migration Cost per Asset:** ${total_cost/len(risk_data):,.0f}
-
-### Risk Distribution
-"""
-    
-    for level in ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'MINIMAL']:
-        count = len(risk_data[risk_data['Threat Level'] == level])
-        pct = (count / len(risk_data)) * 100
-        report += f"- {level}: {count} assets ({pct:.1f}%)\n"
-    
-    report += f"""
----
-
-## Recommendations
-
-1. **Immediate Actions (0-6 months)**
-   - Complete comprehensive cryptographic inventory
-   - Prioritize migration of CRITICAL assets
-   - Establish quantum readiness governance committee
-
-2. **Short-term Actions (6-18 months)**
-   - Begin pilot programs for post-quantum cryptography
-   - Develop detailed migration roadmap
-   - Train security teams on quantum threats
-
-3. **Medium-term Actions (18-36 months)**
-   - Execute phased migration of HIGH risk assets
-   - Implement crypto-agility framework
-   - Regular reassessment of quantum threat timeline
-
----
-
-*Report generated by Quantum Computing Risk Analyst*
-*Configuration: Quantum Advancement Factor = {config['quantum_advancement']}, Readiness = {config['quantum_readiness']}*
-"""
-    
-    return report
+        st.download_button("📥 Download", compliance_csv, "compliance_report.csv", "text/csv", use_container_width=True)
 
 
 def main():
+    """Main application"""
+
     init_session_state()
     config = render_sidebar()
-    render_header()
-    
-    if config["use_sample_data"]:
+    st.session_state.config = config
+
+    # Header
+    st.markdown('<h1 class="main-header">Quantum Computing Risk Analyzer</h1>', unsafe_allow_html=True)
+    st.markdown('<p class="sub-header">Enterprise cryptographic vulnerability assessment with AI-powered insights</p>', unsafe_allow_html=True)
+
+    # Get assets
+    if st.session_state.use_uploaded_data and st.session_state.uploaded_assets is not None:
+        assets = st.session_state.uploaded_assets
+        st.info(f"📊 Using uploaded data from: {st.session_state.uploaded_file_name}")
+    elif config["use_sample_data"]:
         inventory = BankCryptoInventory()
         assets = inventory.get_sample_bank_inventory()
     else:
@@ -658,58 +817,56 @@ def main():
                 for a in st.session_state.custom_assets
             ]
         else:
-            st.warning("No custom assets added. Please add assets in the Asset Management tab or enable 'Use Sample Bank Inventory' in the sidebar.")
-            assets = []
-    
-    if assets:
-        risk_data = generate_risk_report(assets, config["quantum_advancement"])
-        st.session_state.risk_data = risk_data
-        
-        render_executive_summary(risk_data, config)
-        
-        st.markdown("---")
-        
-        tabs = st.tabs([
-            "Risk Analysis",
-            "Compliance",
-            "Cost Estimation",
-            "Asset Management",
-            "Reports"
-        ])
-        
-        with tabs[0]:
-            render_risk_analysis_tab(risk_data, config)
-        
-        with tabs[1]:
-            render_compliance_tab(config)
-        
-        with tabs[2]:
-            render_cost_tab(config, risk_data)
-        
-        with tabs[3]:
-            render_asset_management_tab(config)
-        
-        with tabs[4]:
-            render_reports_tab(risk_data, config)
-    else:
-        st.header("Getting Started")
-        st.info("""
-        Welcome to the Quantum Computing Risk Analyst for Banks!
-        
-        To begin your analysis:
-        1. Enable 'Use Sample Bank Inventory' in the sidebar to see a demo, OR
-        2. Go to the Asset Management tab to add your bank's cryptographic assets
-        """)
-        
-        tabs = st.tabs(["Asset Management"])
-        with tabs[0]:
-            render_asset_management_tab(config)
-    
-    st.sidebar.markdown("---")
-    st.sidebar.markdown("""
-    <div style="text-align: center; color: #888; font-size: 0.8rem;">
-        <p>Quantum Risk Analyst v1.0</p>
-        <p>Built for Banking Security</p>
+            st.info("Enable 'Use Sample Data' or add assets in Asset Management or File Upload tab")
+            render_file_upload()
+            render_asset_management()
+            return
+
+    # Generate risk data
+    risk_data = generate_risk_report(assets, config["quantum_advancement"])
+    st.session_state.risk_data = risk_data
+
+    # Dashboard
+    render_dashboard(risk_data, config)
+
+    st.markdown("---")
+
+    # Main tabs
+    tabs = st.tabs([
+        "📊 Risk Analysis", 
+        "📁 Upload", 
+        "📜 Compliance", 
+        "💰 Cost Analysis", 
+        "🤖 AI Recommendations", 
+        "🏦 Assets", 
+        "📋 Reports"
+    ])
+
+    with tabs[0]:
+        render_risk_analysis(risk_data)
+
+    with tabs[1]:
+        render_file_upload()
+
+    with tabs[2]:
+        render_compliance(config)
+
+    with tabs[3]:
+        render_cost_analysis(risk_data, config)
+
+    with tabs[4]:
+        render_ai_recommendations(risk_data)
+
+    with tabs[5]:
+        render_asset_management()
+
+    with tabs[6]:
+        render_reports(risk_data, config)
+
+    # Footer
+    st.markdown("""
+    <div class="footer">
+        Quantum Risk Analyzer v2.0 | Built for Banking Security
     </div>
     """, unsafe_allow_html=True)
 

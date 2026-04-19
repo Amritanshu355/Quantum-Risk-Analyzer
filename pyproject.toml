@@ -1,11 +1,52 @@
 [project]
-name = "repl-nix-workspace"
-version = "0.1.0"
-description = "Add your description here"
+name = "quantum-risk-analyzer"
+version = "2.0.0"
+description = "Enterprise-grade quantum computing risk assessment platform for banking cryptographic infrastructure"
+readme = "README.md"
 requires-python = ">=3.11"
-dependencies = [
-    "numpy>=2.4.1",
-    "pandas>=2.3.3",
-    "plotly>=6.5.2",
-    "streamlit>=1.53.1",
+authors = [
+    {name = "Your Name", email = "your.email@example.com"}
 ]
+keywords = [
+    "quantum-computing",
+    "cybersecurity",
+    "risk-analysis",
+    "banking",
+    "cryptography",
+    "post-quantum-cryptography"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Financial and Insurance Industry",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security :: Cryptography",
+]
+
+dependencies = [
+    "streamlit>=1.53.1",
+    "pandas>=2.3.3",
+    "numpy>=2.4.1",
+    "plotly>=6.5.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+    "black>=24.0.0",
+    "ruff>=0.1.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/quantum-risk-analyzer"
+Repository = "https://github.com/yourusername/quantum-risk-analyzer"
+Issues = "https://github.com/yourusername/quantum-risk-analyzer/issues"
+
+[project.scripts]
+quantum-risk = "app:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
